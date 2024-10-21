@@ -1,7 +1,7 @@
 package com.gautam.DynamicPDFGenerator.service;
 
-import com.gautam.DynamicPDFGenerator.Model.Item;
-import com.gautam.DynamicPDFGenerator.Model.PdfModel;
+import com.gautam.DynamicPDFGenerator.DTO.Item;
+import com.gautam.DynamicPDFGenerator.DTO.PdfModel;
 import com.gautam.DynamicPDFGenerator.utility.GenerateHash;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;

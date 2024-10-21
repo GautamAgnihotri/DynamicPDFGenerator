@@ -1,16 +1,8 @@
 package com.gautam.DynamicPDFGenerator.controller;
 
-import com.gautam.DynamicPDFGenerator.Model.Item;
-import com.gautam.DynamicPDFGenerator.Model.PdfModel;
+import com.gautam.DynamicPDFGenerator.DTO.PdfModel;
 import com.gautam.DynamicPDFGenerator.service.PdfService;
-import com.itextpdf.io.exceptions.IOException;
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfWriter;
-import com.itextpdf.layout.Document;
-import com.itextpdf.layout.element.Cell;
-import com.itextpdf.layout.element.Paragraph;
-import com.itextpdf.layout.element.Table;
-import com.itextpdf.layout.properties.TextAlignment;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -19,10 +11,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.io.ByteArrayOutputStream;
-import java.io.FileOutputStream;
-
 
 
 @RestController
@@ -35,7 +23,7 @@ public class PdfController {
         this.pdfService = pdfService;
     }
     @PostMapping("/getPDF")
-    public ResponseEntity<byte[]> getPdf(@RequestBody PdfModel pdf){
+    public ResponseEntity<byte[]> getPdf(@Valid @RequestBody PdfModel pdf){
 
         try {
             byte[] pdfByteArray = pdfService.createPdf(pdf);

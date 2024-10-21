@@ -1,6 +1,6 @@
 package com.gautam.DynamicPDFGenerator.utility;
 
-import com.gautam.DynamicPDFGenerator.Model.PdfModel;
+import com.gautam.DynamicPDFGenerator.DTO.PdfModel;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
