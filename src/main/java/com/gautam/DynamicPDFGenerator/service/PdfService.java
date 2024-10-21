@@ -2,6 +2,7 @@ package com.gautam.DynamicPDFGenerator.service;
 
 import com.gautam.DynamicPDFGenerator.Model.Item;
 import com.gautam.DynamicPDFGenerator.Model.PdfModel;
+import com.gautam.DynamicPDFGenerator.utility.GenerateHash;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
@@ -10,12 +11,38 @@ import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.properties.TextAlignment;
 import org.springframework.stereotype.Service;
-
+import org.springframework.beans.factory.annotation.Value;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.nio.file.Files;
+
 
 @Service
 public class PdfService {
+
+    //directory for storing generated PDF
+    @Value("${generated_PDF_Dir_Path}")
+    private String PDF_STORAGE_DIR;
+
     public byte[] createPdf(PdfModel pdfModel) throws Exception {
+
+        //Check whether dir path exists or not
+        File storageDir = new File(PDF_STORAGE_DIR);
+        if(!storageDir.exists()){
+            storageDir.mkdirs();   // Create the directory if it doesn't exist
+        }
+
+        //Create hash of the input data
+        String pdfHash = GenerateHash.getHash(pdfModel);
+
+        //check if PDF already existes in local storage
+        File existingPdf = new File(PDF_STORAGE_DIR+pdfHash+".pdf");
+        if(existingPdf.exists()){
+            return Files.readAllBytes(existingPdf.toPath());
+        }
+
+        //Generate the PDF if it doesn't exist
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         // Initialize PDF Writer
@@ -60,6 +87,10 @@ public class PdfService {
         // Close document and return bytes
         document.close();
         pdfDoc.close();
+
+        try(FileOutputStream fos = new FileOutputStream(existingPdf)){
+            fos.write(baos.toByteArray()); // Write the PDF to the file.
+        }
 
         return baos.toByteArray();
     }
