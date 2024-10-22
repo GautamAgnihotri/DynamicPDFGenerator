@@ -1,4 +1,4 @@
-package com.gautam.DynamicPDFGenerator.DTO;
+package com.gautam.DynamicPDFGenerator.dto;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
