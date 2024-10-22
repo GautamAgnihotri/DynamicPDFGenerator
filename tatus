@@ -1,0 +1,162 @@
+[1mdiff --git a/src/main/java/com/gautam/DynamicPDFGenerator/controller/PdfController.java b/src/main/java/com/gautam/DynamicPDFGenerator/controller/PdfController.java[m
+[1mindex 2a7c50b..386679d 100644[m
+[1m--- a/src/main/java/com/gautam/DynamicPDFGenerator/controller/PdfController.java[m
+[1m+++ b/src/main/java/com/gautam/DynamicPDFGenerator/controller/PdfController.java[m
+[36m@@ -1,8 +1,10 @@[m
+ package com.gautam.DynamicPDFGenerator.controller;[m
+ [m
+[31m-import com.gautam.DynamicPDFGenerator.DTO.PdfModel;[m
+[32m+[m[32mimport com.gautam.DynamicPDFGenerator.dto.PdfModel;[m
+ import com.gautam.DynamicPDFGenerator.service.PdfService;[m
+[32m+[m[32mimport jakarta.servlet.http.HttpServletRequest;[m
+ import jakarta.validation.Valid;[m
+[32m+[m[32mimport lombok.extern.slf4j.Slf4j;[m
+ import org.springframework.beans.factory.annotation.Autowired;[m
+ import org.springframework.http.HttpHeaders;[m
+ import org.springframework.http.HttpStatus;[m
+[36m@@ -12,19 +14,24 @@[m [mimport org.springframework.web.bind.annotation.RequestBody;[m
+ import org.springframework.web.bind.annotation.RequestMapping;[m
+ import org.springframework.web.bind.annotation.RestController;[m
+ [m
+[32m+[m[32mimport java.io.IOException;[m
+ [m
+[32m+[m
+[32m+[m[32m@Slf4j[m
+ @RestController[m
+ @RequestMapping("/api")[m
+ public class PdfController {[m
+ [m
+     private final PdfService pdfService;[m
+[32m+[m[32m    private HttpServletRequest request;[m
+     @Autowired[m
+[31m-    PdfController(PdfService pdfService) {[m
+[32m+[m[32m    PdfController(PdfService pdfService, HttpServletRequest request) {[m
+         this.pdfService = pdfService;[m
+[32m+[m[32m        this.request = request;[m
+     }[m
+     @PostMapping("/getPDF")[m
+     public ResponseEntity<byte[]> getPdf(@Valid @RequestBody PdfModel pdf){[m
+[31m-[m
+[32m+[m[32m        log.info("Request hit from : "+request.getRemoteAddr());[m
+         try {[m
+             byte[] pdfByteArray = pdfService.createPdf(pdf);[m
+ [m
+[36m@@ -34,7 +41,13 @@[m [mpublic class PdfController {[m
+             return new ResponseEntity<>(pdfByteArray, header, HttpStatus.OK);[m
+ [m
+ [m
+[31m-        } catch(Exception e) {[m
+[32m+[m[32m        }[m
+[32m+[m[32m        catch (IOException e){[m
+[32m+[m[32m            log.error("Error while generating PDF :"+e.getMessage());[m
+[32m+[m[32m            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);[m
+[32m+[m[32m        }[m
+[32m+[m[32m        catch(Exception e) {[m
+[32m+[m[32m            log.error("Exception occured :"+e.getMessage());[m
+             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);[m
+         }[m
+         }[m
+[1mdiff --git a/src/main/java/com/gautam/DynamicPDFGenerator/dto/Item.java b/src/main/java/com/gautam/DynamicPDFGenerator/dto/Item.java[m
+[1mindex 400d9f4..293f74c 100644[m
+[1m--- a/src/main/java/com/gautam/DynamicPDFGenerator/dto/Item.java[m
+[1m+++ b/src/main/java/com/gautam/DynamicPDFGenerator/dto/Item.java[m
+[36m@@ -1,4 +1,4 @@[m
+[31m-package com.gautam.DynamicPDFGenerator.DTO;[m
+[32m+[m[32mpackage com.gautam.DynamicPDFGenerator.dto;[m
+ [m
+ import jakarta.validation.constraints.Min;[m
+ import jakarta.validation.constraints.NotEmpty;[m
+[1mdiff --git a/src/main/java/com/gautam/DynamicPDFGenerator/dto/PdfModel.java b/src/main/java/com/gautam/DynamicPDFGenerator/dto/PdfModel.java[m
+[1mindex a4c8881..57c92b1 100644[m
+[1m--- a/src/main/java/com/gautam/DynamicPDFGenerator/dto/PdfModel.java[m
+[1m+++ b/src/main/java/com/gautam/DynamicPDFGenerator/dto/PdfModel.java[m
+[36m@@ -1,4 +1,4 @@[m
+[31m-package com.gautam.DynamicPDFGenerator.DTO;[m
+[32m+[m[32mpackage com.gautam.DynamicPDFGenerator.dto;[m
+ [m
+ import jakarta.validation.constraints.NotEmpty;[m
+ import jakarta.validation.constraints.Pattern;[m
+[1mdiff --git a/src/main/java/com/gautam/DynamicPDFGenerator/service/PdfService.java b/src/main/java/com/gautam/DynamicPDFGenerator/service/PdfService.java[m
+[1mindex 43b69a3..268f4a8 100644[m
+[1m--- a/src/main/java/com/gautam/DynamicPDFGenerator/service/PdfService.java[m
+[1m+++ b/src/main/java/com/gautam/DynamicPDFGenerator/service/PdfService.java[m
+[36m@@ -1,8 +1,9 @@[m
+ package com.gautam.DynamicPDFGenerator.service;[m
+ [m
+[31m-import com.gautam.DynamicPDFGenerator.DTO.Item;[m
+[31m-import com.gautam.DynamicPDFGenerator.DTO.PdfModel;[m
+[32m+[m[32mimport com.gautam.DynamicPDFGenerator.dto.Item;[m
+[32m+[m[32mimport com.gautam.DynamicPDFGenerator.dto.PdfModel;[m
+ import com.gautam.DynamicPDFGenerator.utility.GenerateHash;[m
+[32m+[m[32mimport com.itextpdf.io.exceptions.IOException;[m
+ import com.itextpdf.kernel.pdf.PdfDocument;[m
+ import com.itextpdf.kernel.pdf.PdfWriter;[m
+ import com.itextpdf.layout.Document;[m
+[36m@@ -10,6 +11,8 @@[m [mimport com.itextpdf.layout.element.Cell;[m
+ import com.itextpdf.layout.element.Paragraph;[m
+ import com.itextpdf.layout.element.Table;[m
+ import com.itextpdf.layout.properties.TextAlignment;[m
+[32m+[m
+[32m+[m[32mimport lombok.extern.slf4j.Slf4j;[m
+ import org.springframework.stereotype.Service;[m
+ import org.springframework.beans.factory.annotation.Value;[m
+ import java.io.ByteArrayOutputStream;[m
+[36m@@ -18,6 +21,7 @@[m [mimport java.io.FileOutputStream;[m
+ import java.nio.file.Files;[m
+ [m
+ [m
+[32m+[m[32m@Slf4j[m
+ @Service[m
+ public class PdfService {[m
+ [m
+[36m@@ -27,6 +31,9 @@[m [mpublic class PdfService {[m
+ [m
+     public byte[] createPdf(PdfModel pdfModel) throws Exception {[m
+ [m
+[32m+[m[32m        log.info("Starting PDF generation for seller: {}, buyer: {}", pdfModel.getSeller(), pdfModel.getBuyer());[m
+[32m+[m
+[32m+[m
+         //Check whether dir path exists or not[m
+         File storageDir = new File(PDF_STORAGE_DIR);[m
+         if(!storageDir.exists()){[m
+[36m@@ -35,13 +42,18 @@[m [mpublic class PdfService {[m
+ [m
+         //Create hash of the input data[m
+         String pdfHash = GenerateHash.getHash(pdfModel);[m
+[32m+[m[32m        log.debug("Generated hash for PDF: {}", pdfHash);[m
+ [m
+         //check if PDF already existes in local storage[m
+         File existingPdf = new File(PDF_STORAGE_DIR+pdfHash+".pdf");[m
+         if(existingPdf.exists()){[m
+[32m+[m[32m            log.info("PDF found in local storage, returning existing file: {}", existingPdf.getPath());[m
+             return Files.readAllBytes(existingPdf.toPath());[m
+         }[m
+ [m
+[32m+[m[32m        // Log PDF generation start[m
+[32m+[m[32m        log.info("Generating new PDF for hash: {}", pdfHash);[m
+[32m+[m
+         //Generate the PDF if it doesn't exist[m
+         ByteArrayOutputStream baos = new ByteArrayOutputStream();[m
+ [m
+[36m@@ -90,6 +102,9 @@[m [mpublic class PdfService {[m
+ [m
+         try(FileOutputStream fos = new FileOutputStream(existingPdf)){[m
+             fos.write(baos.toByteArray()); // Write the PDF to the file.[m
+[32m+[m[32m            log.info("PDF successfully generated and saved to: {}", existingPdf.getPath());[m
+[32m+[m[32m        } catch (IOException e){[m
+[32m+[m[32m            throw new IOException("Exception occurred during PDF Creation");[m
+         }[m
+ [m
+         return baos.toByteArray();[m
+[1mdiff --git a/src/main/java/com/gautam/DynamicPDFGenerator/utility/GenerateHash.java b/src/main/java/com/gautam/DynamicPDFGenerator/utility/GenerateHash.java[m
+[1mindex c3e7f08..769463e 100644[m
+[1m--- a/src/main/java/com/gautam/DynamicPDFGenerator/utility/GenerateHash.java[m
+[1m+++ b/src/main/java/com/gautam/DynamicPDFGenerator/utility/GenerateHash.java[m
+[36m@@ -1,6 +1,6 @@[m
+ package com.gautam.DynamicPDFGenerator.utility;[m
+ [m
+[31m-import com.gautam.DynamicPDFGenerator.DTO.PdfModel;[m
+[32m+[m[32mimport com.gautam.DynamicPDFGenerator.dto.PdfModel;[m
+ [m
+ import java.nio.charset.StandardCharsets;[m
+ import java.security.MessageDigest;[m

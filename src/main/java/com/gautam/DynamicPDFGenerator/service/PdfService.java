@@ -1,8 +1,9 @@
 package com.gautam.DynamicPDFGenerator.service;
 
-import com.gautam.DynamicPDFGenerator.DTO.Item;
-import com.gautam.DynamicPDFGenerator.DTO.PdfModel;
+import com.gautam.DynamicPDFGenerator.dto.Item;
+import com.gautam.DynamicPDFGenerator.dto.PdfModel;
 import com.gautam.DynamicPDFGenerator.utility.GenerateHash;
+import com.itextpdf.io.exceptions.IOException;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
@@ -10,6 +11,8 @@ import com.itextpdf.layout.element.Cell;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.properties.TextAlignment;
+
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
 import java.io.ByteArrayOutputStream;
@@ -18,6 +21,7 @@ import java.io.FileOutputStream;
 import java.nio.file.Files;
 
 
+@Slf4j
 @Service
 public class PdfService {
 
@@ -27,6 +31,9 @@ public class PdfService {
 
     public byte[] createPdf(PdfModel pdfModel) throws Exception {
 
+        log.info("Starting PDF generation for seller: {}, buyer: {}", pdfModel.getSeller(), pdfModel.getBuyer());
+
+
         //Check whether dir path exists or not
         File storageDir = new File(PDF_STORAGE_DIR);
         if(!storageDir.exists()){
@@ -35,12 +42,17 @@ public class PdfService {
 
         //Create hash of the input data
         String pdfHash = GenerateHash.getHash(pdfModel);
+        log.debug("Generated hash for PDF: {}", pdfHash);
 
         //check if PDF already existes in local storage
         File existingPdf = new File(PDF_STORAGE_DIR+pdfHash+".pdf");
         if(existingPdf.exists()){
+            log.info("PDF found in local storage, returning existing file: {}", existingPdf.getPath());
             return Files.readAllBytes(existingPdf.toPath());
         }
+
+        // Log PDF generation start
+        log.info("Generating new PDF for hash: {}", pdfHash);
 
         //Generate the PDF if it doesn't exist
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -90,6 +102,9 @@ public class PdfService {
 
         try(FileOutputStream fos = new FileOutputStream(existingPdf)){
             fos.write(baos.toByteArray()); // Write the PDF to the file.
+            log.info("PDF successfully generated and saved to: {}", existingPdf.getPath());
+        } catch (IOException e){
+            throw new IOException("Exception occurred during PDF Creation");
         }
 
         return baos.toByteArray();
